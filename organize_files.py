@@ -1,4 +1,4 @@
-from pyspark.sql.functions import explode, col, regexp_extract, to_date, row_number, input_file_name, when
+from pyspark.sql.functions import col, regexp_extract, to_date, row_number, input_file_name, when
 from pyspark.sql.window import Window
 
 def process_data_to_bronze(df, column_id):
