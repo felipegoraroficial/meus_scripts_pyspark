@@ -37,11 +37,20 @@ def clean_job_data_databricks(df):
     # Substitui valores de 'state' para 'FAILED' onde aplicável
     df = df.withColumn('state', when(col('state') == 'RUN_EXECUTION_ERROR', 'FAILED').otherwise(col('state')))
 
-    # Substitui valores de 'state' para 'SUCCESS' onde for nulo
-    df = df.withColumn('state', when(col('state').isNull(), 'SUCCESS').otherwise(col('state')))
-
-    # Substitui valores de 'message' para 'workflow running' onde 'state' for nulo
-    df = df.withColumn('message', when(col('state') == 'SUCCESS', 'workflow running').otherwise(col('message')))
+    # Atribuindo valores de workflow em execução na coluna status e message
+    df = df.withColumn(
+        'message',
+        when(
+            (col('state').isNull()) | (col('end_date') == '1970-01-01'),
+            'workflow running'
+        ).otherwise(col('message'))
+    ).withColumn(
+        'status',
+        when(
+            (col('state').isNull()) | (col('end_date') == '1970-01-01'),
+            'WORKFLOW_RUNNING'
+        ).otherwise(col('status'))
+    )
 
     # Separa 'start_time' em 'start_date' e 'start_time'
     df = df.withColumn('start_date', to_date(split(col('start_time'), ' ')[0], 'yyyy-MM-dd')) \
