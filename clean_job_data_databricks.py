@@ -37,6 +37,14 @@ def clean_job_data_databricks(df):
     # Substitui valores de 'state' para 'FAILED' onde aplicável
     df = df.withColumn('state', when(col('state') == 'RUN_EXECUTION_ERROR', 'FAILED').otherwise(col('state')))
 
+    # Separa 'start_time' em 'start_date' e 'start_time'
+    df = df.withColumn('start_date', to_date(split(col('start_time'), ' ')[0], 'yyyy-MM-dd')) \
+        .withColumn('start_time', date_format(split(col('start_time'), ' ')[1], 'HH:mm:ss.SSS'))
+
+    # Separa 'end_time' em 'end_date' e 'end_time'
+    df = df.withColumn('end_date', to_date(split(col('end_time'), ' ')[0], 'yyyy-MM-dd')) \
+        .withColumn('end_time', date_format(split(col('end_time'), ' ')[1], 'HH:mm:ss.SSS'))
+
     # Atribuindo valores de workflow em execução na coluna status e message
     df = df.withColumn(
         'message',
@@ -51,14 +59,6 @@ def clean_job_data_databricks(df):
             'WORKFLOW_RUNNING'
         ).otherwise(col('status'))
     )
-
-    # Separa 'start_time' em 'start_date' e 'start_time'
-    df = df.withColumn('start_date', to_date(split(col('start_time'), ' ')[0], 'yyyy-MM-dd')) \
-        .withColumn('start_time', date_format(split(col('start_time'), ' ')[1], 'HH:mm:ss.SSS'))
-
-    # Separa 'end_time' em 'end_date' e 'end_time'
-    df = df.withColumn('end_date', to_date(split(col('end_time'), ' ')[0], 'yyyy-MM-dd')) \
-        .withColumn('end_time', date_format(split(col('end_time'), ' ')[1], 'HH:mm:ss.SSS'))
 
     # Seleciona colunas específicas para o DataFrame final
     df = df.select('run_name', 'run_id', 'creator_user_name', 'start_date', 'start_time', 'end_date', 'end_time', 'run_duration', 'trigger', 'run_page_url', 'state', 'message')
