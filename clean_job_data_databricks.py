@@ -53,11 +53,11 @@ def clean_job_data_databricks(df):
             'workflow running'
         ).otherwise(col('message'))
     ).withColumn(
-        'status',
+        'state',
         when(
             (col('state').isNull()) | (col('end_date') == '1970-01-01'),
             'WORKFLOW_RUNNING'
-        ).otherwise(col('status'))
+        ).otherwise(col('state'))
     )
 
     # Seleciona colunas específicas para o DataFrame final
