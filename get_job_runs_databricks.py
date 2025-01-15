@@ -19,17 +19,17 @@ def get_job_runs_databricks(instancia_databricks, token, id_trabalho):
         "Authorization": f"Bearer {token}"
     }
 
-    params = {"job_id": id_trabalho}
-
-    response = requests.get(url, headers=headers, params=params)
-
-    response.raise_for_status()
-
-    log = response.json()
-
+    params = {"job_id": id_trabalho, "limit": 25}
     logs_list = []
+    has_more = True
 
-    for run in log['runs']:
-        logs_list.append(run)
+    while has_more:
+        response = requests.get(url, headers=headers, params=params)
+        response.raise_for_status()
+        log = response.json()
+        logs_list.extend(log['runs'])
+        has_more = log.get('has_more', False)
+        if has_more:
+            params['offset'] = params.get('offset', 0) + 25
 
     return logs_list

@@ -24,7 +24,7 @@ def clean_job_data_databricks(df):
         return f'{minutes}m:{remaining_seconds}s'
 
     # Cria UDF para converter duração
-    convert_durantion_udf = udf(convert_durantion,StringType())
+    convert_durantion_udf = udf(convert_durantion, StringType())
 
     # Aplica UDF para converter a coluna 'run_duration'
     df = df.withColumn('run_duration', convert_durantion_udf(col('run_duration')))
@@ -37,6 +37,12 @@ def clean_job_data_databricks(df):
     # Substitui valores de 'state' para 'FAILED' onde aplicável
     df = df.withColumn('state', when(col('state') == 'RUN_EXECUTION_ERROR', 'FAILED').otherwise(col('state')))
 
+    # Substitui valores de 'state' para 'SUCCESS' onde for nulo
+    df = df.withColumn('state', when(col('state').isNull(), 'SUCCESS').otherwise(col('state')))
+
+    # Substitui valores de 'message' para 'workflow running' onde 'state' for nulo
+    df = df.withColumn('message', when(col('state') == 'SUCCESS', 'workflow running').otherwise(col('message')))
+
     # Separa 'start_time' em 'start_date' e 'start_time'
     df = df.withColumn('start_date', to_date(split(col('start_time'), ' ')[0], 'yyyy-MM-dd')) \
         .withColumn('start_time', date_format(split(col('start_time'), ' ')[1], 'HH:mm:ss.SSS'))
@@ -46,7 +52,7 @@ def clean_job_data_databricks(df):
         .withColumn('end_time', date_format(split(col('end_time'), ' ')[1], 'HH:mm:ss.SSS'))
 
     # Seleciona colunas específicas para o DataFrame final
-    df = df.select('run_name','run_id','creator_user_name','start_date','start_time','end_date','end_time','run_duration','trigger','run_page_url','state','message')
+    df = df.select('run_name', 'run_id', 'creator_user_name', 'start_date', 'start_time', 'end_date', 'end_time', 'run_duration', 'trigger', 'run_page_url', 'state', 'message')
 
     # Extrai minutos e segundos de 'run_duration' e calcula a duração total em minutos
     df = df.withColumn('run_duration_minutes', regexp_extract(col('run_duration'), '(\d+)m', 1).cast('double')) \
